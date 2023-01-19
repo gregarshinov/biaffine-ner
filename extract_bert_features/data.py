@@ -29,7 +29,7 @@ class Example(object):
             bert_tokens.extend(bert_t)
 
         bert_sentence_tokens = [tokenizer.tokenize(' '.join(s)) for s in self.sentence_tokens]
-
+        orig_to_bert_map[-1] -= 1 # The last index will be out of bounds if it is not decremented by 1
         bert_to_orig_map = [-1] * len(bert_tokens)
         for i, bert_i in enumerate(orig_to_bert_map):
             bert_to_orig_map[bert_i] = i

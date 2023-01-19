@@ -306,7 +306,7 @@ def main(_):
             document_index = int(result["unique_ids"])
             bert_example = bert_examples[document_index]
             orig_example = orig_examples[document_index]
-            file_key = bert_example.doc_key.replace('/', ':')
+            file_key = str(bert_example.doc_key).replace('/', ':')
 
             t.update(n=(result['extract_indices'] >= 0).sum())
 

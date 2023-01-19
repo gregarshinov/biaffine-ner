@@ -43,9 +43,12 @@ def mkdirs(path):
   return path
 
 def load_char_dict(char_vocab_path):
-  vocab = [u"<unk>"]
+  vocab = [u"<unk>", u" ", u"\n", u"\t"]
   with codecs.open(char_vocab_path, encoding="utf-8") as f:
-    vocab.extend(l.strip() for l in f.readlines())
+    for l in f:
+        target_char = l.strip()
+        if target_char:
+            vocab.append(target_char)
   char_dict = collections.defaultdict(int)
   char_dict.update({c:i for i, c in enumerate(vocab)})
   return char_dict
