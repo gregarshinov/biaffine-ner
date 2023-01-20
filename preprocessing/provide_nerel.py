@@ -66,7 +66,7 @@ def main(prefix):
     nlp = spacy.load('ru_core_news_lg')
     ds = load_dataset("iluvvatar/NEREL")
     for split in ["train", "dev", "test"]:
-        processed_ds = ds[split].map(partial(process_example, nlp), remove_columns=["text", "relations", "links"])
+        processed_ds = ds[split].map(partial(process_example, nlp), remove_columns=["text", "relations", "links", "entities"])
         path = Path(prefix) / f"{split}.jsonl"
         dump_ds(processed_ds, path)
 

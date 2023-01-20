@@ -15,10 +15,11 @@ For the sake of brevity, I will omit some of the original README parts.
 ## Environment Setup
 
 * The Biaffine NER code is written in Python 2.7 and Tensorflow 1.0, preprocessing code is written in python 3.8
-* Before you can start palying around with the code, you need to create two separate python environments (for Biaffine NER and for preprocessing accordingly) amd run `pip install -r requirements.txt` in each of them.
+* Before you can start palying around with the code, you need to create two separate python environments (for Biaffine NER and for preprocessing accordingly) and run `pip install -r requirements.txt` in each of them.
 * You also need to download Russian context-independent word [embeddings](https://dl.fbaipublicfiles.com/fasttext/vectors-crawl/cc.ru.300.vec.gz).
+* To reproduce my results faster, you can access all the preprocessed files and filtered vocab (for RAM efficiency) [here]()
 
-## Using a pre-trained model
+## Using a pre-trained model (Generally)
 
 * All two of the pretrained models are available at may [Google drive](https://essexuniversity.box.com/s/etbae3f57hts3hr79e5ck5z0tppkoasu). 
 * Choose the model you want to use and copy it to the `logs/` folder.
@@ -48,3 +49,27 @@ For the sake of brevity, I will omit some of the original README parts.
 
 * [Original repo](https://github.com/juntaoy/biaffine-ner) The repo, this codebase was forked from.
 * [Amir Zeldes](https://github.com/amir-zeldes) kindly created a tensorflow 2.0 and python 3 ready version and can be find [here](https://github.com/amir-zeldes/biaffine-ner)
+
+# Comments and notes
+
+* The NEREL dataset initially has a character span based annotations. To prepare this dataset for this model, one needs to segment each example into sentences and tokens and then map char span anntotations to token span annotations. 
+* Some of NEREL entities may be "torn apart": one annotation for several char spans. This fact prevents one from using token span annotation based methods. That is why we had to split them into several annotations.
+* Biaffine NER method allows for nested NER, so we solve this task in particular.
+* Original code base did not work well with NEREL without following modifications:
+  * `extract_bert_features/data.py` had a bug in the 31st line, that caused Index error.
+  * [Original repo](https://github.com/juntaoy/biaffine-ner) version of `biaffine_ner_model.py` does not allow for Languae Model ablaition, while [Amir Zeldes's](https://github.com/amir-zeldes) one does. We had to change it back to TF1 and remove __future__ imports.
+  * `load_char_dict()` function (`util.py` line 44) treated char vocab too loosly: if there were several whitespaces, that occupied several positions in vocab file, that would lead to inconsistency in charcter index. Consequently, no training could be started because of tensor size mismatches. My modifications helped mitigate that.
+* We did not employ contextualized word embeddings due to their high computational cost and their taking too long to be computed.
+
+### Experiments
+
+We trained the model during no more than standard 40000 steps variying only character embedding size.
+
+### Results
+
+
+
+### Room for improvement
+1. Train longer than 40000 steps. The loss in both experiments have not reached its plato yet.
+2. Use contextualized embeddings from ruBERT.
+3. Perform a grid search on the following hyperparameters: `dropout_rate`, `lexical_droput_rate`, `char_embedding_size`, `filter_size`
