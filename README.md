@@ -17,7 +17,7 @@ For the sake of brevity, I will omit some of the original README parts.
 * The Biaffine NER code is written in Python 2.7 and Tensorflow 1.0, preprocessing code is written in python 3.8
 * Before you can start palying around with the code, you need to create two separate python environments (for Biaffine NER and for preprocessing accordingly) and run `pip install -r requirements.txt` in each of them.
 * You also need to download Russian context-independent word [embeddings](https://dl.fbaipublicfiles.com/fasttext/vectors-crawl/cc.ru.300.vec.gz).
-* To reproduce my results faster, you can access all the preprocessed files and filtered vocab (for RAM efficiency) [here]()
+* To reproduce my results faster, you can access all the preprocessed files and filtered vocab (for RAM efficiency) [here](https://drive.google.com/file/d/1rdncowxr-gHaRdZvE0SF9HgeFkK5m907/view?usp=share_link)
 
 ## Using a pre-trained model
 
