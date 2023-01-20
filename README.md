@@ -8,7 +8,7 @@ This repository contains code introduced in the following paper:
 Juntao Yu, Bernd Bohnet and Massimo Poesio  
 In *Proceedings of the 58th Annual Conference of the Association for Computational Linguistics (ACL)*, 2020
 
-As well as its adaptation for Russian language data, for solving nested NER task on [NEREL](https://huggingface.co/datasets/iluvvatar/NEREL) dataset.
+As well as its adaptation for Russian language data for solving nested NER task on [NEREL](https://huggingface.co/datasets/iluvvatar/NEREL) dataset.
 This is a modified codebase, that includes a preprocessing script.
 For the sake of brevity, I will omit some of the original README parts.
 
@@ -19,7 +19,7 @@ For the sake of brevity, I will omit some of the original README parts.
 * You also need to download Russian context-independent word [embeddings](https://dl.fbaipublicfiles.com/fasttext/vectors-crawl/cc.ru.300.vec.gz).
 * To reproduce my results faster, you can access all the preprocessed files and filtered vocab (for RAM efficiency) [here]()
 
-## Using a pre-trained model (Generally)
+## Using a pre-trained model
 
 * All two of the pretrained models are available at may [Google drive](https://essexuniversity.box.com/s/etbae3f57hts3hr79e5ck5z0tppkoasu). 
 * Choose the model you want to use and copy it to the `logs/` folder.
