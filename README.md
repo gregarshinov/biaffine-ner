@@ -50,14 +50,95 @@ For the sake of brevity, I will omit some of the original README parts.
 * [Original repo](https://github.com/juntaoy/biaffine-ner) The repo, this codebase was forked from.
 * [Amir Zeldes](https://github.com/amir-zeldes) kindly created a tensorflow 2.0 and python 3 ready version and can be find [here](https://github.com/amir-zeldes/biaffine-ner)
 
+
+## Task summary
+The task was to provide a solution, that solves the NER task on NEREL dataset.
+
+## Detailed reproduction instructions
+
+1. Clone this repo and cd into it
+```bash
+git clone https://github.com/gregarshinov/biaffine-ner
+cd biaffine-ner
+```
+2. Create 2 separate python environments and fill them with needed packages.
+I used conda for this.
+```bash
+conda create -y -n nerel27 python=2.7
+conda activate nerel27
+pip install -r requirements.txt
+
+conda create -y -n nerel38 python=3.8
+conda activate nerel38
+pip install -r preprocessing/requirements.txt
+```
+3. Download and preprocess the NEREL data
+Activate the **nerel38** environment if you have not done it already. Then do:
+```bash
+mkdir resources
+python preprocessing/provide_nerel.py $(pwd)/resources
+```
+To run this you need an internet connection.
+At this point you should have three files under the resources directory: train.jsonl, dev.jsonl and test.jsonl
+
+4. Activate the **nerel27** environment. Prepare the character vocabulary and move it to the resources directory by running:
+```bash
+python get_char_vocab.py train_dev resources/train.jsonl resources/dev.jsonl
+mv char_vocab.train_dev.txt resources/
+```
+
+5. Download the fasttext word embeddings and unpack them
+```bash
+cd resources
+wget https://dl.fbaipublicfiles.com/fasttext/vectors-crawl/cc.ru.300.vec.gz
+gzip -dk cc.ru.300.vec.gz
+```
+6. (Optional) Filter word embeddings file, so we only have to load words, that are used in this experiment for RAM efficiency. Here I will provide some exemplary python code (you have to check your paths), that can be run in jupyter lab:
+```python
+from pathlib import Path
+import json
+
+vocab = set()
+for split in ["train", "test", "dev"]:
+    with open(f"resources/{split}.jsonl", encoding='utf-8') as f:
+        for line in f:
+            data = json.loads(line.strip())
+            vocab.update({word for sentence in data["sentences"] for word in sentence})
+
+with Path("resources/cc.ru.300.vec").open(encoding='utf-8') as f, Path("resources/cc.ru.300.vec.filtered").open(encoding='utf-8', mode="w") as f2:
+    for idx, line in enumerate(f):
+        if idx == 0:
+            continue
+        data = line.strip().split()
+        if data[0] in vocab:
+            f2.write(line)
+```
+7. Check the `experiments.conf` file. The `nerel` and `nerel_ce16` should have correct paths (if you followed all the instructions thoroughly it will work as is)
+8. Run training. Make sure, that you are in project's root directory `biaffine-ner` and the `nerel27` environment is activated:
+```bash
+python train.py nerel
+```
+and then another configuration:
+```bash
+python train.py nerel_ce16
+```
+After 40000 steps the process should stop.
+Now you have your best checkpoints in the `logs` directory.
+9. Evaluate the chosen configuration on the test set.
+```bash
+python evaluate.py nerel
+```
+The results will be printed out to stdout.
+
 # Comments and notes
 
-* The NEREL dataset initially has a character span based annotations. To prepare this dataset for this model, one needs to segment each example into sentences and tokens and then map char span anntotations to token span annotations. 
+* The NEREL dataset initially has a character span based annotations. To prepare this dataset for this model, one needs to segment each example into sentences and tokens and then map char span anntotations to token span annotations.
 * Some of NEREL entities may be "torn apart": one annotation for several char spans. This fact prevents one from using token span annotation based methods. That is why we had to split them into several annotations.
+* Spacy's Russian sentence segmentation has its flaws. This may affect the training quality.
 * Biaffine NER method allows for nested NER, so we solve this task in particular.
 * Original code base did not work well with NEREL without following modifications:
   * `extract_bert_features/data.py` had a bug in the 31st line, that caused Index error.
-  * [Original repo](https://github.com/juntaoy/biaffine-ner) version of `biaffine_ner_model.py` does not allow for Languae Model ablaition, while [Amir Zeldes's](https://github.com/amir-zeldes) one does. We had to change it back to TF1 and remove __future__ imports.
+  * [Original repo](https://github.com/juntaoy/biaffine-ner) version of `biaffine_ner_model.py` does not allow for Languae Model ablaition, while [Amir Zeldes's](https://github.com/amir-zeldes) one does. We had to change it back to TF1 and remove \__future__ imports.
   * `load_char_dict()` function (`util.py` line 44) treated char vocab too loosly: if there were several whitespaces, that occupied several positions in vocab file, that would lead to inconsistency in charcter index. Consequently, no training could be started because of tensor size mismatches. My modifications helped mitigate that.
 * We did not employ contextualized word embeddings due to their high computational cost and their taking too long to be computed.
 
@@ -67,9 +148,25 @@ We trained the model during no more than standard 40000 steps variying only char
 
 ### Results
 
+| model\metric                                                                                   | P     | R     | F1    |
+|------------------------------------------------------------------------------------------------|-------|-------|-------|
+| This Biaffine NER + fasstext                                                                   | 77.79 | 53.09 | 63.10 |
+| This Biaffine NER + fasstext (char emb size doubled)                                           | 77.94 | 54.30 | 64    |
+| Biaffine NER + fasstext (reported in [original article](https://arxiv.org/pdf/2108.13112.pdf)) | 78.84 | 71.80 | 75.13 |
 
+### Observations
+
+* It looks like increasing character embedding size improves all the metrics. 
+* We did not precisely reproduce the results, reported in [original article](https://arxiv.org/pdf/2108.13112.pdf), but we know, what to try next.
 
 ### Room for improvement
 1. Train longer than 40000 steps. The loss in both experiments have not reached its plato yet.
 2. Use contextualized embeddings from ruBERT.
+  * We tried using multilingual BERT cased, but stumbled upon massive computational cost.
+  * To effortlessly employ ruBERT the code base needs to be updated to use Tensor Flow 2. (There is a [version](https://github.com/amir-zeldes), that is claimed to be TF2 compliant, but it's not. It is still work-in-progress (I tried using it and ended up rewriting TF calls myself))
 3. Perform a grid search on the following hyperparameters: `dropout_rate`, `lexical_droput_rate`, `char_embedding_size`, `filter_size`
+4. Write a reverse data format converter to go from token level spans back to char level spans. This will allow assessing the performance of the chosen method objectively with regard to the original task.
+5. Think of ways to unify preprocessing and inference code to deliver the pipeline to production. 
+* Create two separate microservices: one for preprocessing and postprocessing, another (python 2.7) for model inference. (Drawbacks: the more services we have, the more hassle to maintain and monitor them)
+* Rewrite the 2.7 codebase to 3.8 and be happy (Drawbacks: may take significantly more time to implement than just using the given 2.7 codebase as is)
+6. Try to use a different sentence segmenter or write it manually to improve the segmentation quality.
