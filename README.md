@@ -21,7 +21,7 @@ For the sake of brevity, I will omit some of the original README parts.
 
 ## Using a pre-trained model
 
-* All two of the pretrained models are available at may [Google drive](https://essexuniversity.box.com/s/etbae3f57hts3hr79e5ck5z0tppkoasu). 
+* All two of the pretrained models are available at my [Google drive](https://essexuniversity.box.com/s/etbae3f57hts3hr79e5ck5z0tppkoasu). 
 * Choose the model you want to use and copy it to the `logs/` folder.
 * Modifiy the *test_path* accordingly in the `experiments.conf`:
 * the *test_path* is the path to *.jsonl* file, each line of the *.jsonlines* file is a batch of sentences and must in the following format:
@@ -41,7 +41,7 @@ For the sake of brevity, I will omit some of the original README parts.
 
 ## Training your own model
 
-* Run `python get_char_vocab.py train.jsonl dev.jsonl`to create the character vocabulary.
+* Run `python get_char_vocab.py train.jsonl dev.jsonl` to create the character vocabulary.
 * Put the address to the resulting file into experiments.con into the `char_vocab_path` field.
 * Start training by running `python train.py config_name`
 
@@ -56,13 +56,13 @@ The task was to provide a solution, that solves the NER task on NEREL dataset.
 
 ## Detailed reproduction instructions
 
-1. Clone this repo and cd into it
+1. Clone this repo and `cd` into it:
 ```bash
 git clone https://github.com/gregarshinov/biaffine-ner
 cd biaffine-ner
 ```
-2. Create 2 separate python environments and fill them with needed packages.
-I used conda for this.
+2. Create 2 separate python environments and fill them with needed packages. (I used conda for this)
+
 ```bash
 conda create -y -n nerel27 python=2.7
 conda activate nerel27
@@ -72,8 +72,9 @@ conda create -y -n nerel38 python=3.8
 conda activate nerel38
 pip install -r preprocessing/requirements.txt
 ```
-3. Download and preprocess the NEREL data
-Activate the **nerel38** environment if you have not done it already. Then do:
+
+3. Activate the **nerel38** environment if you have not done it already. Run the following commands to download and preprocess the NEREL dataset:
+
 ```bash
 mkdir resources
 python preprocessing/provide_nerel.py $(pwd)/resources
@@ -87,13 +88,15 @@ python get_char_vocab.py train_dev resources/train.jsonl resources/dev.jsonl
 mv char_vocab.train_dev.txt resources/
 ```
 
-5. Download the fasttext word embeddings and unpack them
+5. Download the fasttext word embeddings and unpack them:
+
 ```bash
 cd resources
 wget https://dl.fbaipublicfiles.com/fasttext/vectors-crawl/cc.ru.300.vec.gz
 gzip -dk cc.ru.300.vec.gz
 ```
-6. (Optional) Filter word embeddings file, so we only have to load words, that are used in this experiment for RAM efficiency. Here I will provide some exemplary python code (you have to check your paths), that can be run in jupyter lab:
+
+6. (Optional) Filter word embeddings file, so we only have to load words, that are used in this experiment for RAM efficiency. Here I will provide some exemplary python code (you have to check your paths), that can be run in jupyter lab (or wherever it is convenient for you):
 ```python
 from pathlib import Path
 import json
@@ -113,6 +116,7 @@ with Path("resources/cc.ru.300.vec").open(encoding='utf-8') as f, Path("resource
         if data[0] in vocab:
             f2.write(line)
 ```
+
 7. Check the `experiments.conf` file. The `nerel` and `nerel_ce16` should have correct paths (if you followed all the instructions thoroughly it will work as is)
 8. Run training. Make sure, that you are in project's root directory `biaffine-ner` and the `nerel27` environment is activated:
 ```bash
@@ -124,7 +128,9 @@ python train.py nerel_ce16
 ```
 After 40000 steps the process should stop.
 Now you have your best checkpoints in the `logs` directory.
+
 9. Evaluate the chosen configuration on the test set.
+
 ```bash
 python evaluate.py nerel
 ```
@@ -156,7 +162,7 @@ We trained the model during no more than standard 40000 steps variying only char
 
 ### Observations
 
-* It looks like increasing character embedding size improves all the metrics. 
+* It looks like increasing character embedding size slightly improves all the metrics.
 * We did not precisely reproduce the results, reported in [original article](https://arxiv.org/pdf/2108.13112.pdf), but we know, what to try next.
 
 ### Room for improvement
